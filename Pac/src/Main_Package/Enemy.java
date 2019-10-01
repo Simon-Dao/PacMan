@@ -15,14 +15,15 @@ import javafx.scene.paint.Color;
 public class Enemy 
 {
     Player pacman = new Player();
-    Map m;
+    Map m = new Map();
+    public boolean vulnerable = false;
     
     private int x = 11;
     private int y = 14;
     private int px = pacman.getX();
     private int py = pacman.getY();
-    
-    private boolean vulnerable = false;
+   
+    private boolean alive = true;
     
     public int getX()
     {
@@ -34,26 +35,46 @@ public class Enemy
         return y;
     }
     
+    /**
+     * 
+     * @param x
+     * @return 
+     */
+    public int setX(int x)
+    {
+        this.x = x;
+        return x;
+    }
+    
+    /**
+     * 
+     * @param x
+     * @return 
+     */
+    public int setY(int y)
+    {
+        this.y = y;
+        return y;
+    }
+
+    
     public void moveLeft()
     {
-        
+        x--;
     }
     public void moveRight()
     {
-        
+        x++;
     }
     public void moveUp()
     {
-        
+        y++;
     }
     public void moveDown()
     {
-        
+        y--;
     }
-    public void checkCollision()
-    {
-        //checks surrounding nodes if pac man is there
-    }
+    
     public void kill()
     {
         if(pacman.getX() == x && pacman.getY() == y)
@@ -66,9 +87,5 @@ public class Enemy
         x = 11;
         y = 14;
     }
-    public void draw(GraphicsContext gc)
-    {
-       gc.setFill(Color.RED);
-       gc.fillRect(x*m.getScale()+3, y*m.getScale()+3, 13, m.getScale()-2);
-    }
+    
 }

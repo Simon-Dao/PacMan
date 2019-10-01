@@ -1,5 +1,6 @@
 package Main_Package;
 
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -19,7 +20,7 @@ import javafx.stage.Stage;
 /**
  * TODO add smoother movement
  * add sound
- * add enemies
+ * find out why tf the ghosts keep moving weird
  * add a pause screen
  * add a main menu
  * add a map maker *OPTIONAL*
@@ -42,6 +43,7 @@ public class Main extends Application
     private Scene scene;
     
     private Player pacMan = new Player();
+    private Enemy ghost = new Enemy();
     private Control control = new Control();
     private Audio soundPlayer = new Audio();
     
@@ -56,6 +58,11 @@ public class Main extends Application
     private enum Direction {up,down,left,right}
     private Direction oldDir;
     private Direction dir = Direction.right;
+    
+    //ghost movement
+    private enum DirectionGhost {up,down,left,right}
+    private DirectionGhost oldDirGhost;
+    private DirectionGhost dirGhost = DirectionGhost.right;
 
     private int[][] GOOGLE_MAP = 
     {               //12
@@ -73,9 +80,9 @@ public class Main extends Application
                    {0,0,0,0,0,0,0,0,0,b,b,b, y,b,1,1,1,1,0,g,g,g,0,r,r,r,r,0},
                    //5
                    {0,1,1,1,1,0,r,r,r,b,y,y, y,b,1,0,0,1,0,g,0,0,0,r,0,0,0,0},
-                   {0,1,0,0,0,0,r,b,r,b,y,b, 6,b,1,0,1,1,0,g,0,1,0,r,r,r,0,0},
+                   {0,1,0,0,0,0,r,b,r,b,y,y, 6,b,1,0,1,1,0,g,0,1,0,r,r,r,0,0},
                    {0,1,0,1,1,0,r,b,r,b,y,b, y,b,1,0,0,0,0,g,0,1,0,r,0,0,0,0},
-                   {0,1,0,7,1,0,r,b,r,b,y,b, y,b,1,1,1,1,0,g,0,1,0,r,r,r,r,0},
+                   {0,1,0,7,1,0,r,b,r,b,y,y, y,b,1,1,1,1,0,g,0,1,0,r,r,r,r,0},
                    {0,1,1,1,1,0,r,r,r,b,y,y, b,b,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                    //11   
                    {0,0,0,0,0,0,0,0,0,b,b,b, 1,0,1,1,1,1,0,1,0,1,1,0,1,0,1,1},
@@ -129,6 +136,10 @@ public class Main extends Application
         gc.setFill(Color.YELLOW);
         gc.fillOval(pacMan.getX() * m.getScale(), pacMan.getY() * m.getScale(), m.getScale(), m.getScale());
         
+        //draw ghost
+        drawGhost(gc);
+        
+        //play beginning sound
         soundPlayer.beginning();
         
         TimerTask task = new TimerTask() 
@@ -136,6 +147,7 @@ public class Main extends Application
             @Override
             public void run() 
             {
+                // start game when sound is over
                 running = true;
             }
     };
@@ -145,6 +157,7 @@ public class Main extends Application
     long delay = 4000L;
     timer.schedule(task, delay);
         
+    // sets the fps of the game
     new AnimationTimer()
     {
         long lastTick = 0;        
@@ -174,6 +187,7 @@ public class Main extends Application
     }
     }.start(); 
         
+        // set up the window
         primaryStage.setTitle(title);
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -208,7 +222,9 @@ public class Main extends Application
         {
             // make a method that does special fruit stuff
         }
-        System.out.println("x "+pacMan.getX()+" y "+pacMan.getY());
+        
+        drawGhost(gc);
+        moveGhost();
     }
     
     /**
@@ -340,6 +356,7 @@ public class Main extends Application
         
         oldDir = Direction.right;
         
+        //pacman movement
         switch(dir)
         {
             case right:
@@ -357,6 +374,31 @@ public class Main extends Application
             case down:
                 oldDir = Direction.down;
                 pacMan.setY(pacMan.getY() + velocity);
+                break;
+        }
+        
+        //ghost direction
+        switch(dirGhost)
+        {
+            case right:
+                oldDirGhost = DirectionGhost.right;
+                setGhostCollision();
+                ghost.moveRight();
+                break;
+            case left:
+                oldDirGhost = DirectionGhost.left;
+                setGhostCollision();
+                ghost.moveLeft();
+                break;
+            case up:
+                oldDir = Direction.up;
+                setGhostCollision();
+                ghost.moveUp();
+                break;
+            case down:
+                oldDir = Direction.down;
+                setGhostCollision();
+                ghost.moveDown();
                 break;
         }
         
@@ -416,8 +458,51 @@ public class Main extends Application
             pacMan.setY(pacMan.getY());
             
         }
+        
+        if(ghost.getX() == -1 && dirGhost == dirGhost.left)
+        {
+            ghost.setX(27);
+            ghost.setY(ghost.getY());
+            
+        }
+        
+        // go through the right portal
+        if(ghost.getX() == 28 && dirGhost == dirGhost.right)
+        {
+            ghost.setX(0);
+            ghost.setY(ghost.getY());
+            
+        }
     }
-
+    
+    public void setGhostCollision()
+    {
+        //if the node to the right is not walkable
+        if(!m.getNode(ghost.getX()+1, ghost.getY()).isWalkable() && dirGhost == DirectionGhost.right)
+        {
+            //move in the opposite direction
+            ghost.setX(ghost.getX()-1);
+        }
+        //if the node to the left is not walkable
+        if(!m.getNode(ghost.getX()-1, ghost.getY()).isWalkable())
+        {
+            //move in the opposite direction
+            ghost.setX(ghost.getX()+1);
+        }
+        //if the node to the node above is not walkable
+        if(!m.getNode(ghost.getX(), ghost.getY()-1).isWalkable())
+        {
+            //move in the opposite direction
+            ghost.setY(ghost.getY()+1);
+        }
+        //if the node to the node below is not walkable
+        if(!m.getNode(ghost.getX(), ghost.getY()+1).isWalkable())
+        {
+            //move in the opposite direction
+            ghost.setY(ghost.getY()-1);
+        }
+    }
+    
     //sees if the current node has cherries and plays a cherry eating sound
     public void cherrySound()
     {
@@ -452,6 +537,83 @@ public class Main extends Application
             }  
         });
             }
+    
+    public void drawGhost(GraphicsContext gc)
+    {
+        if(ghost.vulnerable == true)
+        {
+            gc.setFill(Color.BLUE);
+            gc.fillRect(ghost.getX()*m.getScale()+3, ghost.getY()*m.getScale()+3, 13, m.getScale()-2);
+        }
+        else
+        {
+            gc.setFill(Color.RED);
+            gc.fillRect(ghost.getX()*m.getScale()+3, ghost.getY()*m.getScale()+7, 20, 15);
+            gc.fillOval(ghost.getX()*m.getScale()+3, ghost.getY()*m.getScale()+2, 20, 15);
+            
+            gc.setFill(Color.BLACK);
+            gc.fillOval(ghost.getX()*m.getScale()+3, ghost.getY()*m.getScale()+20, 20, 12);
+        }
+    }
+    
+    //ai for the ghost
+    public void moveGhost()
+    {   
+        Random random = new Random();
+        
+        // check above node
+        if(ghost.getY() > 0)
+        {
+            if(m.getNode(ghost.getX(), ghost.getY()-1).isWalkable() && oldDirGhost != dirGhost.up)
+            {
+                int r = random.nextInt(50);
+                //1 out of 3 chance to move right
+                if(r == 1)
+                {
+                    ghost.moveUp();
+                }
+            }
+        }
+        // check below node
+        if(ghost.getY() < 27)
+        {
+            if(m.getNode(ghost.getX(), ghost.getY()+1).isWalkable() && oldDirGhost != dirGhost.down)
+            {
+                int r = random.nextInt(50);
+                //1 out of 3 chance to move right
+                if(r == 1)
+                {
+                    ghost.moveDown();
+                }
+            }
+        }
+        // check left node
+        if(ghost.getX() > 1)
+        {
+            if(m.getNode(ghost.getX()-1, ghost.getY()).isWalkable() && oldDirGhost != dirGhost.left)
+            {
+                int r = random.nextInt(50);
+                //1 out of 3 chance to move right
+                if(r == 1)
+                {
+                    ghost.moveLeft();
+                }
+            }
+        }
+        // check right node
+        if(ghost.getX() < 27)
+        {
+            if(m.getNode(ghost.getX()+1, ghost.getY()).isWalkable() && oldDirGhost != dirGhost.right)
+            {
+                int r = random.nextInt(50);
+                //1 out of 3 chance to move right
+                if(r == 1)
+                {
+                    ghost.moveRight();
+                }
+            }
+        }
+    }
      /**
      * 
      * @param args the command line arguments

@@ -5,6 +5,8 @@
  */
 package Main_Package;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
@@ -19,9 +21,8 @@ public class Map {
     
     private int scale = 25;
     private int CHERRY_COUNT = 0;
-     
+    
     private Tile[][] nodes;
-    private boolean[][] fruit;
     
     /**
      * 
@@ -52,6 +53,9 @@ public class Map {
         CHERRY_COUNT--;
         return CHERRY_COUNT;
     }
+    
+    public Map(){}
+    
     /**
      * 
      * @param map 
@@ -127,7 +131,7 @@ public class Map {
                     && nodes[x][y].hasFruit() 
                     && nodes[x][y].isWalkable())
                 {
-                    CHERRY_COUNT++;
+                    //CHERRY_COUNT++;
                     gc.setFill(CHERRY_COLOR);
                     gc.fillOval(x*scale+11, y*scale+11,5, 5);  
                 }
